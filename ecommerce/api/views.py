@@ -11,6 +11,8 @@ class ItemListCreate(generics.ListCreateAPIView):
     serializer_class = ItemSerializer
 
 class CartViewSet(viewsets.ViewSet):
+    queryset = CartItem.objects.all()
+    serializer_class = CartSerializer
     def create(self, request):
         serializer = CartSerializer(data = request.data)
         if serializer.is_valid():
