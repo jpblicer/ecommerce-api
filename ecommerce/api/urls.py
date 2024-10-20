@@ -7,5 +7,5 @@ router.register(r'cart', CartViewSet)
 
 urlpatterns = [
     path('items/', ItemListCreate.as_view(), name = 'item-view-create'),
-    path('', include(router.urls))
+    path('cart/', include(router.urls))
 ]
