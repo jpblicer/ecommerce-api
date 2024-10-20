@@ -47,3 +47,18 @@ class CartViewSet(viewsets.ViewSet):
         queryset = CartItem.objects.filter(cart=cart)
         serializer = CartSerializer(queryset, many=True)
         return Response(serializer.data)
+
+    def checkout(self, request):
+        cart = request.user.cart
+        cart_items = CartItem.objects.filter(cart=cart)
+
+        if not cart_items.exists():
+            return Response({"Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
+
+        for cart_item in cart_items:
+            item = cart_item.item
+            item.quantity -= cart_item.quantity
+            item.save()
+
+        cart_items.delete()
+        return Response({"Checkout successful."}, status=status.HTTP_200_OK)
