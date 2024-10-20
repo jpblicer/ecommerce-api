@@ -17,7 +17,7 @@ class CartViewSet(viewsets.ViewSet):
     def create(self, request):
         item_id = request.data.get('item')
         quantity = request.data.get('quantity')
-        cart = request.user.cart
+        cart, created = Cart.objects.get_or_create(user=None)
 
         try:
             item = Item.objects.get(id=item_id)
@@ -43,7 +43,7 @@ class CartViewSet(viewsets.ViewSet):
         return Response(CartSerializer(cart_item).data, status=status.HTTP_201_CREATED)
 
     def list(self, request):
-        cart = request.user.cart
-        queryset = Cart.objects.filter(cart=cart)
+        cart, created = Cart.objects.get_or_create(user=None)
+        queryset = CartItem.objects.filter(cart=cart)
         serializer = CartSerializer(queryset, many=True)
         return Response(serializer.data)
