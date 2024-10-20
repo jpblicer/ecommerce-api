@@ -7,5 +7,13 @@ class Item(models.Model):
     price = models.IntegerField()
     quantity = models.IntegerField()
 
-    def __str__(self):
-        return self.name
+class Cart(models.Model):
+    items = models.ManyToManyField(Item, through='CartItem')
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
+    item = models.ForeignKey(Item, on_delete=models.CASCADE)
+    quantity = models.IntegerField
+
+    class Meta:
+        unique_together = ('cart', 'item')
