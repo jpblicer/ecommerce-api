@@ -6,8 +6,8 @@ from .models import CartItem, Item, Cart
 
 # Create your views here.
 
-class ItemListCreate(generics.ListCreateAPIView):
-    queryset = Item.objects.all()
+class ItemList(generics.ListAPIView):
+    queryset = Item.objects.filter(quantity__gt=0)
     serializer_class = ItemSerializer
 
 class CartViewSet(viewsets.ViewSet):
