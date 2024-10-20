@@ -49,7 +49,7 @@ class CartViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
     def checkout(self, request):
-        cart = request.user.cart
+        cart, created = Cart.objects.get_or_create(user=None)
         cart_items = CartItem.objects.filter(cart=cart)
 
         if not cart_items.exists():
@@ -57,8 +57,12 @@ class CartViewSet(viewsets.ViewSet):
 
         for cart_item in cart_items:
             item = cart_item.item
+            if item.quantity < cart_item.quantity:
+                return Response({"Insufficient stock for {}.".format(item.name)}, status=status.HTTP_400_BAD_REQUEST)
+        
             item.quantity -= cart_item.quantity
             item.save()
 
-        cart_items.delete()
-        return Response({"Checkout successful."}, status=status.HTTP_200_OK)
+            cart_items.delete()
+
+            return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
