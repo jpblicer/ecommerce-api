@@ -7,17 +7,33 @@ class ItemSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "price", "quantity"]
 
 class CartSerializer(serializers.ModelSerializer):
-    item = ItemSerializer()
+    item = serializers.PrimaryKeyRelatedField(queryset=Item.objects.all())
 
     class Meta:
         model = CartItem
         fields = ['item', 'quantity']
 
-    def validate_quantity(self, data):
-        item = data['item']
-        quantity = data['quantity']
+    def validate_quantity(self, quantity):
+        item_id = self.initial_data.get('item')
+        item = Item.objects.get(id=item_id)
 
-        if quantity >= item.quantity:
-            raise serializers.ValidationError("{} exceeds remaining stock of {}.".format(item.name, item.quantity))
+        if quantity > item.quantity:
+            raise serializers.ValidationError(
+                "{} exceeds remaining stock of {}.".format(item.name, item.quantity)
+            )
         
-        return data
+        return quantity
+
+    def create(self, validated_data):
+        item = validated_data.pop('item')
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=self.context['request'].cart,
+            item=item,
+            defaults={'quantity': validated_data['quantity']}
+        )
+        
+        if not created:
+            cart_item.quantity += validated_data['quantity']
+            cart_item.save()
+        
+        return cart_item
