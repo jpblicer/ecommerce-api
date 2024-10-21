@@ -30,15 +30,9 @@ class CartViewSet(viewsets.ViewSet):
 
         cart_item, created = CartItem.objects.get_or_create(cart=cart, item=item)
 
-        if not created:
-            cart_item.quantity += quantity
-            cart_item.save()
-        else:
-            cart_item.quantity = quantity
-            cart_item.save()
-
-        item.quantity -= quantity
+        item.quantity -= cart_item.quantity
         item.save()
+        cart_item.save()
 
         return Response(CartSerializer(cart_item).data, status=status.HTTP_201_CREATED)
 
@@ -63,6 +57,6 @@ class CartViewSet(viewsets.ViewSet):
             item.quantity -= cart_item.quantity
             item.save()
 
-            cart_items.delete()
+        cart_items.delete()
 
-            return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
+        return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
