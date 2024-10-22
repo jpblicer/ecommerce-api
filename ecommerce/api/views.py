@@ -18,7 +18,7 @@ class CartViewSet(viewsets.ViewSet):
         cart, created = Cart.objects.get_or_create(user=None)
 
         if quantity is None:
-            return Response({"Quantity is required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Quantity is required."}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
             quantity = int(quantity)
@@ -29,14 +29,14 @@ class CartViewSet(viewsets.ViewSet):
         try:
             item = Item.objects.get(id=item_id)
         except Item.DoesNotExist:
-            return Response({"Item not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "Item not found."}, status=status.HTTP_404_NOT_FOUND)
 
         if quantity > item.quantity:
-            return Response({"{} only has stock of {}.".format(item.name, item.quantity)},
+            return Response({"error": "{} only has stock of {}.".format(item.name, item.quantity)},
                             status=status.HTTP_400_BAD_REQUEST)
 
         if quantity <= 0:
-            return Response({"Invalid quantity requested. Must be a positive number."},
+            return Response({"error": "Invalid quantity requested. Must be a positive number."},
                             status=status.HTTP_400_BAD_REQUEST)
 
         cart_item, created = CartItem.objects.get_or_create(cart=cart, item=item)
@@ -59,12 +59,12 @@ class CartViewSet(viewsets.ViewSet):
         cart_items = CartItem.objects.filter(cart=cart)
 
         if not cart_items.exists():
-            return Response({"Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
         for cart_item in cart_items:
             item = cart_item.item
             if item.quantity < cart_item.quantity:
-                return Response({"Insufficient stock for {}.".format(item.name)}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "Insufficient stock for {}.".format(item.name)}, status=status.HTTP_400_BAD_REQUEST)
         
             item.quantity -= cart_item.quantity
             item.save()
