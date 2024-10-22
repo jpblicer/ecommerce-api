@@ -13,17 +13,6 @@ class CartSerializer(serializers.ModelSerializer):
         model = CartItem
         fields = ['item', 'quantity']
 
-    def validate_quantity(self, quantity):
-        item_id = self.initial_data.get('item')
-        item = Item.objects.get(id=item_id)
-
-        if quantity > item.quantity:
-            raise serializers.ValidationError(
-                "{} exceeds remaining stock of {}.".format(item.name, item.quantity)
-            )
-        
-        return quantity
-
     def create(self, validated_data):
         item = validated_data.pop('item')
         cart_item, created = CartItem.objects.get_or_create(

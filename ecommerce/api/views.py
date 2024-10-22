@@ -4,8 +4,6 @@ from rest_framework.response import Response
 from .serializers import ItemSerializer, CartSerializer
 from .models import CartItem, Item, Cart
 
-# Create your views here.
-
 class ItemList(generics.ListAPIView):
     queryset = Item.objects.filter(quantity__gt=0)
     serializer_class = ItemSerializer
@@ -25,7 +23,7 @@ class CartViewSet(viewsets.ViewSet):
             return Response({"Item not found."}, status=status.HTTP_404_NOT_FOUND)
 
         if quantity > item.quantity:
-            return Response({"{} is out of stock. remaining stock is {}.".format(item.name, item.quantity)},
+            return Response({"{} only has stock of {}.".format(item.name, item.quantity)},
                             status=status.HTTP_400_BAD_REQUEST)
 
         if quantity <= 0:
