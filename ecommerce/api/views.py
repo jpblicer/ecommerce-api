@@ -43,22 +43,12 @@ def handle_cart_request(request):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-#####################################################
-    # def checkout(self, request):
-    #     cart, created = Cart.objects.get_or_create(user=None)
-    #     cart_items = CartItem.objects.filter(cart=cart)
+@api_view(["POST"])
+def cart_checkout(request):
+    cart, created = Cart.objects.get_or_create(user=None)
+    
+    cart_items = CartItem.objects.filter(cart=cart)
 
-    #     if not cart_items.exists():
-    #         return Response({"message": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
-
-    #     for cart_item in cart_items:
-    #         item = cart_item.item
-    #         if item.quantity < cart_item.quantity:
-    #             return Response({"error": "Insufficient stock for {}.".format(item.name)}, status=status.HTTP_400_BAD_REQUEST)
-        
-    #         item.quantity -= cart_item.quantity
-    #         item.save()
-
-    #     cart_items.delete()
-
-    #     return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
+    cart_items.delete()
+    
+    return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
