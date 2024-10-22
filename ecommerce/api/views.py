@@ -1,12 +1,24 @@
-from rest_framework import generics, viewsets, status
+from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.decorators import api_view
 
 from .serializers import ItemSerializer, CartSerializer
 from .models import CartItem, Item, Cart
 
-class ItemList(generics.ListAPIView):
-    queryset = Item.objects.filter(quantity__gt=0)
-    serializer_class = ItemSerializer
+@api_view(["GET"])
+def items_list(request):
+    items = Item.objects.filter(quantity__gt=0)
+    serializer = ItemSerializer(items, many=True)
+    return Response(serializer.data)
+
+
+@api_view(["GET"])
+def cart_items_list(request):
+    cart_items = CartItem.objects.all()
+    serializer = CartSerializer(cart_items, many=True)
+    return Response(serializer.data)
+
+
 
 class CartViewSet(viewsets.ViewSet):
     queryset = CartItem.objects.all()
