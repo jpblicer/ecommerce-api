@@ -1,10 +1,13 @@
+import logging
 from django.utils.ipv6 import ValidationError
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 from .serializers import ItemSerializer, CartSerializer
-from .models import CartItem, Item, Cart
+from .models import CartItem, Item, Cart, PurchaseRecord
+
+logger = logging.getLogger(__name__)
 
 @api_view(["GET"])
 def items_list(request):
@@ -58,6 +61,23 @@ def cart_checkout(request):
     
     if not created:
         cart_items = CartItem.objects.filter(cart=cart)
+
+
+        purchased_items = []
+        
+        for item in cart_items:
+            purchased_items.append({
+                'item_id': item.item.id,
+                'item_name': item.item.name,
+                'item_quantity': item.quantity
+            })
+            
+            PurchaseRecord.objects.create(
+                item=item.item,
+                quantity=item.quantity
+            )
+        logger.info("Items purchased: {}".format(purchased_items))
+     
         cart_items.delete()
         return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
     else:
