@@ -1,4 +1,4 @@
-from rest_framework import viewsets, status
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
@@ -13,25 +13,28 @@ def items_list(request):
 
 
 @api_view(["GET", "POST"])
-
 def handle_cart_request(request):
     cart, created = Cart.objects.get_or_create(user=None)
 
+# List Items in Cart
     if request.method == "GET":
-        def cart_items_list(request):
-            cart_items = CartItem.objects.all()
-            serializer = CartSerializer(cart_items, many=True)
-            return Response(serializer.data)
+        cart_items = CartItem.objects.all()
+        serializer = CartSerializer(cart_items, many=True)
+        return Response(serializer.data)
 
+# Add Item to Cart
     elif request.method == "POST":
-        requested_item = request.data.get('item')
-        item_quantity = request.data.get('quantity')
+        requested_item_id = request.data.get('item')
+        item_quantity_requested = request.data.get('quantity')
 
-        item = Item.objects.get(requested_item)
-        quantity = int(item_quantity)
+        item = Item.objects.get(id = requested_item_id)
+        quantity = int(item_quantity_requested)
 
+        item.quantity -= quantity
+        item.save()
 
-        added_cart_item = CartItem.objects.get_or_create(cart = cart, quantity = quantity)
+        added_cart_item, created = CartItem.objects.get_or_create(cart = cart, item=item)
+        added_cart_item.quantity += quantity
 
         added_cart_item.save()
 
@@ -45,66 +48,22 @@ def handle_cart_request(request):
 
 
 
-class CartViewSet(viewsets.ViewSet):
-    queryset = CartItem.objects.all()
-    serializer_class = CartSerializer
+#####################################################
+    # def checkout(self, request):
+    #     cart, created = Cart.objects.get_or_create(user=None)
+    #     cart_items = CartItem.objects.filter(cart=cart)
 
-    def add_item_to_cart(self, request):
-        item_id = request.data.get('item')
-        quantity = request.data.get('quantity')
-        cart, created = Cart.objects.get_or_create(user=None)
+    #     if not cart_items.exists():
+    #         return Response({"message": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if quantity is None:
-            return Response({"error": "Quantity is required."}, status=status.HTTP_400_BAD_REQUEST)
+    #     for cart_item in cart_items:
+    #         item = cart_item.item
+    #         if item.quantity < cart_item.quantity:
+    #             return Response({"error": "Insufficient stock for {}.".format(item.name)}, status=status.HTTP_400_BAD_REQUEST)
         
-        try:
-            quantity = int(quantity)
-        except (ValueError, TypeError):
-            return Response({"error": "Quantity must be a valid positive number."}, status=status.HTTP_400_BAD_REQUEST)
+    #         item.quantity -= cart_item.quantity
+    #         item.save()
 
-        try:
-            item = Item.objects.get(id=item_id)
-        except Item.DoesNotExist:
-            return Response({"error": "Item not found."}, status=status.HTTP_404_NOT_FOUND)
+    #     cart_items.delete()
 
-        if quantity > item.quantity:
-            return Response({"error": "{} only has stock of {}.".format(item.name, item.quantity)},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        if quantity <= 0:
-            return Response({"error": "Invalid quantity requested. Must be a positive number."},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-        cart_item, created = CartItem.objects.get_or_create(cart=cart, item=item)
-
-        item.quantity -= quantity
-        cart_item.quantity = quantity
-        item.save()
-        cart_item.save()
-
-        return Response(CartSerializer(cart_item).data, status=status.HTTP_201_CREATED)
-
-    def list(self, request):
-        cart, created = Cart.objects.get_or_create(user=None)
-        queryset = CartItem.objects.filter(cart=cart)
-        serializer = CartSerializer(queryset, many=True)
-        return Response(serializer.data)
-
-    def checkout(self, request):
-        cart, created = Cart.objects.get_or_create(user=None)
-        cart_items = CartItem.objects.filter(cart=cart)
-
-        if not cart_items.exists():
-            return Response({"message": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
-
-        for cart_item in cart_items:
-            item = cart_item.item
-            if item.quantity < cart_item.quantity:
-                return Response({"error": "Insufficient stock for {}.".format(item.name)}, status=status.HTTP_400_BAD_REQUEST)
-        
-            item.quantity -= cart_item.quantity
-            item.save()
-
-        cart_items.delete()
-
-        return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
+    #     return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
