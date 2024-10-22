@@ -28,6 +28,10 @@ class CartViewSet(viewsets.ViewSet):
             return Response({"{} is out of stock. remaining stock is {}.".format(item.name, item.quantity)},
                             status=status.HTTP_400_BAD_REQUEST)
 
+        if quantity <= 0:
+            return Response({"Invalid quantity requested. Must be a positive number."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
         cart_item, created = CartItem.objects.get_or_create(cart=cart, item=item)
 
         item.quantity -= cart_item.quantity
