@@ -12,7 +12,7 @@ class CartViewSet(viewsets.ViewSet):
     queryset = CartItem.objects.all()
     serializer_class = CartSerializer
 
-    def create(self, request):
+    def add_item_to_cart(self, request):
         item_id = request.data.get('item')
         quantity = request.data.get('quantity')
         cart, created = Cart.objects.get_or_create(user=None)
@@ -23,8 +23,7 @@ class CartViewSet(viewsets.ViewSet):
         try:
             quantity = int(quantity)
         except (ValueError, TypeError):
-            return Response({"error": "Quantity must be a valid positive integer."}, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({"error": "Quantity must be a valid positive number."}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             item = Item.objects.get(id=item_id)
