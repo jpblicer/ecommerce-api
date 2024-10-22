@@ -7,9 +7,13 @@ from .models import CartItem, Item, Cart
 
 @api_view(["GET"])
 def items_list(request):
-    items = Item.objects.filter(quantity__gt=0)
-    serializer = ItemSerializer(items, many=True)
-    return Response(serializer.data)
+    try:
+        items = Item.objects.filter(quantity__gt=0)
+        serializer = ItemSerializer(items, many=True)
+        return Response(serializer.data)
+    except Exception as error:
+        return Response({"error": str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 @api_view(["GET", "POST"])
