@@ -12,7 +12,7 @@ class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     items = models.ManyToManyField(Item, through='CartItem')
 
-# For now there is authenticated user. Just allow for anonymous user
+# For now there is no authenticated user. Just allow for anonymous user
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)

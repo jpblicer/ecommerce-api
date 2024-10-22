@@ -14,8 +14,17 @@ class CartViewSet(viewsets.ViewSet):
 
     def create(self, request):
         item_id = request.data.get('item')
-        quantity = int(request.data.get('quantity'))
+        quantity = request.data.get('quantity')
         cart, created = Cart.objects.get_or_create(user=None)
+
+        if quantity is None:
+            return Response({"Quantity is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            quantity = int(quantity)
+        except (ValueError, TypeError):
+            return Response({"error": "Quantity must be a valid positive integer."}, status=status.HTTP_400_BAD_REQUEST)
+
 
         try:
             item = Item.objects.get(id=item_id)
