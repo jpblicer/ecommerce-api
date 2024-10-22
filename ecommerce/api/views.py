@@ -34,7 +34,8 @@ class CartViewSet(viewsets.ViewSet):
 
         cart_item, created = CartItem.objects.get_or_create(cart=cart, item=item)
 
-        item.quantity -= cart_item.quantity
+        item.quantity -= quantity
+        cart_item.quantity = quantity
         item.save()
         cart_item.save()
 
