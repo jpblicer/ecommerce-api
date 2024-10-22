@@ -12,11 +12,36 @@ def items_list(request):
     return Response(serializer.data)
 
 
-@api_view(["GET"])
-def cart_items_list(request):
-    cart_items = CartItem.objects.all()
-    serializer = CartSerializer(cart_items, many=True)
-    return Response(serializer.data)
+@api_view(["GET", "POST"])
+
+def handle_cart_request(request):
+    cart, created = Cart.objects.get_or_create(user=None)
+
+    if request.method == "GET":
+        def cart_items_list(request):
+            cart_items = CartItem.objects.all()
+            serializer = CartSerializer(cart_items, many=True)
+            return Response(serializer.data)
+
+    elif request.method == "POST":
+        requested_item = request.data.get('item')
+        item_quantity = request.data.get('quantity')
+
+        item = Item.objects.get(requested_item)
+        quantity = int(item_quantity)
+
+
+        added_cart_item = CartItem.objects.get_or_create(cart = cart, quantity = quantity)
+
+        added_cart_item.save()
+
+
+    serializer = CartSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    return Response(serializer.data, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 
