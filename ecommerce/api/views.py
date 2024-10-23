@@ -40,21 +40,13 @@ def handle_cart_request(request):
 
         quantity = int(item_quantity_requested)
 
-        if quantity > item.quantity:
-            return Response({"error": "Requested quantity exceeds available stock."}, status=status.HTTP_400_BAD_REQUEST)
-
-        item.quantity -= quantity
-        item.save()
-
-        added_cart_item, created = CartItem.objects.get_or_create(cart = cart, item=item)
+        added_cart_item, created = CartItem.objects.get_or_create(cart=cart, item=item)
         added_cart_item.quantity += quantity
-
         added_cart_item.save()
 
         serializer = CartSerializer(added_cart_item)
-
         return Response(serializer.data, status=status.HTTP_201_CREATED)
-   
+
 @api_view(["POST"])
 def cart_checkout(request):
     cart, created = Cart.objects.get_or_create(user=None)
@@ -62,22 +54,29 @@ def cart_checkout(request):
     if not created:
         cart_items = CartItem.objects.filter(cart=cart)
 
-
         purchased_items = []
         
-        for item in cart_items:
-            purchased_items.append({
-                'item_id': item.item.id,
-                'item_name': item.item.name,
-                'item_quantity': item.quantity
-            })
-            
+        for cart_item in cart_items:
+            if cart_item.quantity > cart_item.item.quantity:
+                return Response({"error": "There is only {} reamining in stock for {}.".format(cart_item.item.quantity, cart_item.item.name)}, 
+                                status=status.HTTP_400_BAD_REQUEST)
+
             PurchaseRecord.objects.create(
-                item=item.item,
-                quantity=item.quantity
+                item=cart_item.item,
+                quantity=cart_item.quantity
             )
+
+            cart_item.item.quantity -= cart_item.quantity
+            cart_item.item.save()
+
+            purchased_items.append({
+                'item_id': cart_item.item.id,
+                'item_name': cart_item.item.name,
+                'item_quantity': cart_item.quantity
+            })
+
         logger.info("Items purchased: {}".format(purchased_items))
-     
+
         cart_items.delete()
         return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
     else:
