@@ -30,6 +30,8 @@ E-commerce Backend API written with Python(3.10.12) / Django(5.1.2 latest at tim
 You can then run the server locally with :
 `python manage.py runserver`
 
+You can seed the database with mock data by running:
+`python3 manage.py load_data`
 
 ## Routes
 This API provides the following routes which can be accessed by built in Django development tools or others of choice. This Documentation uses curl.
