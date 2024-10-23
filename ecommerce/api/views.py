@@ -48,6 +48,20 @@ def handle_cart_request(request):
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        current_cart_item = CartItem.objects.filter(cart=cart, item=item).first()
+        if current_cart_item:
+            total_quantity_in_cart = current_cart_item.quantity + quantity
+        else:
+            total_quantity_in_cart = quantity
+
+        if total_quantity_in_cart > item.quantity:
+            return Response({
+                "error": {
+                    "en": "Total quantity in cart exceeds available stock of {}.".format(item.quantity),
+                    "ja": "{}の在庫が超過しています。".format(item.quantity)
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+
         added_cart_item, _ = CartItem.objects.get_or_create(cart=cart, item=item)
         added_cart_item.quantity += quantity
         added_cart_item.save()
