@@ -17,7 +17,12 @@ def items_list(request):
         return Response(serializer.data)
     except Exception as error:
         logger.error("Error fetching items: {}".format(error))
-        return Response({"error": str(error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({
+            "error": {
+                "en": "An error occurred while fetching items.",
+                "ja": "アイテムを取得中にエラーが発生しました。"
+            }
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(["GET", "POST"])
 def handle_cart_request(request):
@@ -37,7 +42,10 @@ def handle_cart_request(request):
 
         if quantity > item.quantity:
             return Response({
-                "error": "Requested quantity exceeds available stock of {}.".format(item.quantity)
+                "error": {
+                    "en": "Requested quantity exceeds available stock of {}.".format(item.quantity),
+                    "ja": "{}の在庫が超過しています。".format(item.quantity)
+                }
             }, status=status.HTTP_400_BAD_REQUEST)
 
         added_cart_item, _ = CartItem.objects.get_or_create(cart=cart, item=item)
@@ -52,7 +60,12 @@ def cart_checkout(request):
     cart, created = Cart.objects.get_or_create(user=None)
 
     if created or not CartItem.objects.filter(cart=cart).exists():
-        return Response({"error": "Cart is empty."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+            "error": {
+                "en": "Cart is empty.",
+                "ja": "カートは空です。"
+            }
+        }, status=status.HTTP_400_BAD_REQUEST)
 
     cart_items = CartItem.objects.filter(cart=cart)
     purchased_items = []
@@ -60,7 +73,10 @@ def cart_checkout(request):
     for cart_item in cart_items:
         if cart_item.quantity > cart_item.item.quantity:
             return Response({
-                "error": "There are only {} remaining in stock for {}.".format(cart_item.item.quantity, cart_item.item.name)
+                "error": {
+                    "en": "Only {} remaining in stock for {}.".format(cart_item.item.quantity, cart_item.item.name),
+                    "ja": "{}の在庫が残り{}個です。".format(cart_item.item.name, cart_item.item.quantity)
+                }
             }, status=status.HTTP_400_BAD_REQUEST)
 
         PurchaseRecord.objects.create(item=cart_item.item, quantity=cart_item.quantity)
@@ -74,4 +90,7 @@ def cart_checkout(request):
 
     logger.info("Items purchased: {}".format(purchased_items))
     cart_items.delete()
-    return Response({"message": "Checkout successful."}, status=status.HTTP_200_OK)
+    return Response({"message": {
+        "en": "Checkout successful.",
+        "ja": "チェックアウトが成功しました。"
+    }}, status=status.HTTP_200_OK)
