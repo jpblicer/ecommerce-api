@@ -2,7 +2,9 @@ import logging
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.views import csrf_exempt
 
 from .serializers import ItemSerializer, CartSerializer
 from .models import CartItem, Item, Cart, PurchaseRecord
@@ -26,8 +28,9 @@ def items_list(request):
 
 @api_view(["GET", "POST"])
 def handle_cart_request(request):
-    cart, _ = Cart.objects.get_or_create(user=None)
-
+    user = request.user if request.user.is_authenticated else None
+    cart, _ = Cart.objects.get_or_create(user=user)
+    
     if request.method == "GET":
         cart_items = CartItem.objects.filter(cart=cart)
         serializer = CartSerializer(cart_items, many=True)
@@ -69,11 +72,14 @@ def handle_cart_request(request):
         serializer = CartSerializer(added_cart_item)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-@api_view(["POST"])
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def cart_checkout(request):
-    cart, created = Cart.objects.get_or_create(user=None)
+    user = request.user if request.user.is_authenticated else None
+    cart, created = Cart.objects.get_or_create(user=user)
 
-    if created or not CartItem.objects.filter(cart=cart).exists():
+    if  not CartItem.objects.filter(cart=cart).exists():
         return Response({
             "error": {
                 "en": "Cart is empty.",
